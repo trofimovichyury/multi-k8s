@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      component: server
+  template:
+    metadata:
+      labels:
+        component: server
+    spec:
+      containers:
+        - name: server
+          image: trofimovichyury/multi-client:v1
+          ports:
+            - containerPort: 5000
+          env:
+            - name: REDIS_HOST # should be the same as in redis-cluster-ip-service.yaml
+              value: redis-cluster-ip-service
+            - name: REDIS_PORT
+              value: '6379'
+            - name: PGUSER
+              value: postgres
+            - name: PGHOST
+              value: postgres-cluster-ip-service # should be the same value as in postgres-cluster-ip-service.yaml
+            - name: PGPORT
+              value: '5432' # should be the same value as in postgres-cluster-ip-service.yaml PORT
+            - name: PGDATABASE
+              value: postgres
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgpassword # the same valu that specified in kubectl command - kubectl create secret generic pgpassword --from-literal PGPASSWORD=value
+                  key: PGPASSWORD # this value is also corresponds to the bubectl command the last part of it - --from-literal PGPASSWORD=value

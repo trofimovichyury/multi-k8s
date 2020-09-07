@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: postgres
+  template:
+    metadata:
+      labels:
+        component: postgres
+    spec:
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: database-persistent-volume-claim # the same name as in database-persistent-volume-claim.yaml
+      containers:
+        - name: postgres
+          image: postgres
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-storage # should be the same value ans in spec.volumes.name
+              mountPath: /var/lib/postgresql/data
+              subPath: postgres # any data inside of counter that is store in mountPath is going to store inside of the folder called postgres isinde of actual persisted volume claim
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgpassword # the same valu that specified in kubectl command - kubectl create secret generic pgpassword --from-literal PGPASSWORD=value
+                  key: PGPASSWORD # this value is also corresponds to the bubectl command the last part of it - --from-literal PGPASSWORD=value

@@ -3,36 +3,25 @@ services:
   - docker
 env:
   global:
-    - SHA=$(git rev-parse HEAD) # get git commit sha, IMPORTANT NOTE that this envs will be available inside of deploy.sh file that will be used in deploy section
-    - CLOUDSDK_CORE_DISABLE_PROMPTS=1 # this will tell google SDK to say YES to all question during scripts
+    - SHA=$(git rev-parse HEAD)
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1
 before_install:
-  # decrypt encrypted google creds
   - openssl aes-256-cbc -K $encrypted_9f3b5599b056_key -iv $encrypted_9f3b5599b056_iv -in service-account.json.enc -out service-account.json -d
-  # install google cloud SDK
   - curl https://sdk.cloud.google.com | bash > /dev/null;
   - source $HOME/google-cloud-sdk/path.bash.inc
-  # update kubectl
   - gcloud components update kubectl
-  # make auth from unencrypted google creds
   - gcloud auth activate-service-account --key-file service-account.json
-  # set ID of kubernetes project on google cloud
   - gcloud config set project multi-k8s-288814
-  # set zone of the project in google cloud
   - gcloud config set compute/zone europe-west1-b	
-  # get creds from google kubernetes project by name and not ID as above
   - gcloud container clusters get-credentials multi-cluster
-  # login to docker, login state will stay during all further scripts
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  # build an image during CI process just to make a tests
   - docker build -t trofimovichyury/react-test -f ./client/Dockerfile.dev ./client
 
 script:
-  # running tests
   - docker run -e CI=true trofimovichyury/react-test npm test
 
 deploy:
   provider: script
-  # run script
   script: bash ./deploy.sh
   on:
     branch: master

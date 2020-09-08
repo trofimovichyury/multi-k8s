@@ -1,5 +1,10 @@
+language: generic
 sudo: required
 services:
   - docker
+
 before_install:
-  - echo "Hello"
+  - docker build -t yurytrafimovich/react-tests -f ./client/Dockerfile.dev ./client/
+
+script:
+  - docker run -e CI=true yurytrafimovich/react-tests npm run test
